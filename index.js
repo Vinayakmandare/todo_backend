@@ -4,9 +4,11 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 const TodoModel = require('./Models/Todo')
 const app = express()
-app.use(cors({
-    origin: 'https://hilarious-gecko-d675e4.netlify.app' // Only allow this frontend to access the backend
-}));
+const corsOptions = {
+  origin: '*',  // This allows all origins
+};
+app.use(cors(corsOptions));
+
 
 app.use(express.json())
 mongoose.connect(process.env.MONGO_URI, {
