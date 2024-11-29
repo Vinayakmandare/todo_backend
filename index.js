@@ -1,18 +1,27 @@
 // require('dotenv').config();
 const express = require('express')
 const mongoose = require('mongoose')
-const cors = require('cors')
+// const cors = require('cors')
 const TodoModel = require('./Models/Todo')
 const app = express()
-app.use(cors())
+// app.use(cors())
 app.use(express.json())
+const cors = require('cors');
+app.use(cors({ origin: '*' })); // Allow all origins (or specify your frontend's URL)
+require('dotenv').config();
+// const mongoose = require('mongoose');
 
+const uri = process.env.MONGO_URI;
+const port = process.env.PORT || 3002;
 
-const uri = "mongodb+srv://vinayakmandare21:ZaolhK5sA3OqcY61@cluster0.8dewo.mongodb.net/todolist";
-console.log('MongoDB URI:', uri); // Debugging
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
+
 
     app.get('/get', (req, res) => {
         TodoModel.find()
@@ -27,26 +36,34 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
     });
     
     app.put('/edit/:id', async (req, res) => {
-        console.log('Request Params:', req.params);
-        console.log('Request Body:', req.body);
-    
-        const { id } = req.params;
-        const { task } = req.body;
-    
         try {
-            const updatedTodo = await Todo.findByIdAndUpdate(id, { task }, { new: true });
-            if (!updatedTodo) {
-                console.error('Todo not found:', id);
-                return res.status(404).send('Todo not found');
+            const { id } = req.params;
+            const { task } = req.body;
+    
+            console.log('Incoming request:', { id, task });
+    
+            if (!task) {
+                console.error('Task is missing in the request body');
+                return res.status(400).json({ error: 'Task is required' });
             }
-            console.log('Successfully updated:', updatedTodo);
-            res.json(updatedTodo);
-        } catch (error) {
-            console.error('Error:', error);
-            res.status(500).send('Error updating task');
+    
+            const updatedTask = await TodoModel.findByIdAndUpdate(
+                id,
+                { task },
+                { new: true }
+            );
+    
+            if (!updatedTask) {
+                console.error(`No task found with ID: ${id}`);
+                return res.status(404).json({ error: 'Task not found' });
+            }
+    
+            res.status(200).json(updatedTask);
+        } catch (err) {
+            console.error('Error updating task:', err);
+            res.status(500).json({ error: 'Internal Server Error' });
         }
     });
-    
     
 app.put('/update/:id',(req,res)=>{
 const {id} = req.params;
